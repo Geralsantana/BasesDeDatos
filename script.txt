@@ -1,0 +1,166 @@
+create database ecommerce;
+use ecommerce;
+create table usuario (
+    id int not null primary key auto_increment,
+    nombre varchar(50) not null,
+    apellido varchar(50),
+    email varchar(50),
+    unique(email),
+    password varchar(50) not null
+);
+CREATE TABLE Productos (
+    producto_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    precio DECIMAL(10, 2) NOT NULL,
+    stock INT NOT NULL,
+    categoria_id INT,
+    FOREIGN KEY (categoria_id) REFERENCES Categorias(categoria_id)
+);
+CREATE TABLE Categorias (
+    categoria_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL
+);
+CREATE TABLE Pedidos (
+    pedido_id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT,
+    fecha DATE,
+    estado ENUM('pendiente', 'en proceso', 'completado', 'cancelado'),
+	FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+);
+CREATE TABLE DetallesPedido (
+    detalle_id INT AUTO_INCREMENT PRIMARY KEY,
+    pedido_id INT,
+    producto_id INT,
+    cantidad INT,
+    precio_unitario DECIMAL(10, 2),
+    FOREIGN KEY (pedido_id) REFERENCES Pedidos(pedido_id),
+    FOREIGN KEY (producto_id) REFERENCES Productos(producto_id)
+);
+CREATE TABLE Envios (
+    envio_id INT AUTO_INCREMENT PRIMARY KEY,
+    pedido_id INT,
+    direccion VARCHAR(255),
+    ciudad VARCHAR(100),
+    codigo_postal VARCHAR(20),
+    estado ENUM('enviado', 'en camino', 'entregado'),
+    FOREIGN KEY (pedido_id) REFERENCES Pedidos(pedido_id)
+);
+CREATE TABLE CarritoCompras (
+    carrito_id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT,
+    producto_id INT,
+    cantidad INT,
+    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuario(id),
+    FOREIGN KEY (producto_id) REFERENCES Productos(producto_id)
+);
+CREATE TABLE MetodosPago (
+    metodo_pago_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255),
+    descripcion TEXT
+);
+CREATE TABLE DetallesPago (
+    detalle_pago_id INT AUTO_INCREMENT PRIMARY KEY,
+    pedido_id INT,
+    metodo_pago_id INT,
+    monto DECIMAL(10, 2),
+    fecha_pago DATE,
+    FOREIGN KEY (pedido_id) REFERENCES Pedidos(pedido_id),
+    FOREIGN KEY (metodo_pago_id) REFERENCES MetodosPago(metodo_pago_id)
+);
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+-- Insertar datos en la tabla de Usuarios
+INSERT INTO usuario (nombre, apellido, email, password) 
+VALUES 
+('John', 'Doe', 'john@example.com', 'password123'),
+('Jane', 'Smith', 'jane@example.com', 'password456'),
+('Michael', 'Johnson', 'michael@example.com', 'password789'),
+('Emily', 'Williams', 'emily@example.com', 'passwordabc'),
+('David', 'Brown', 'david@example.com', 'passworddef');
+
+-- Insertar datos en la tabla de Categorías
+INSERT INTO Categorias (nombre) 
+VALUES 
+('Maquillaje facial'),
+('Maquillaje de ojos'),
+('Maquillaje de labios'),
+('Maquillaje de uñas'),
+('Accesorios de maquillaje');
+
+-- Insertar datos en la tabla de Productos
+INSERT INTO Productos (nombre, descripcion, precio, stock, categoria_id) 
+VALUES 
+('Base de maquillaje', 'Base líquida, tono natural', 15.99, 100, 1),
+('Máscara de pestañas', 'Máscara de pestañas negra, volumen extremo', 9.99, 50, 2),
+('Lápiz labial rojo', 'Lápiz labial de larga duración, tono rojo intenso', 12.50, 30, 3),
+('Esmalte de uñas', 'Esmalte de uñas rojo brillante', 7.50, 20, 4),
+('Brocha de maquillaje', 'Brocha para aplicación de polvos', 8.99, 40, 5);
+
+-- Insertar datos en la tabla de Pedidos
+INSERT INTO Pedidos (usuario_id, fecha, estado) 
+VALUES 
+(1, '2024-02-24', 'pendiente'),
+(2, '2024-02-25', 'completado'),
+(3, '2024-02-26', 'en proceso');
+
+-- Insertar datos en la tabla de Detalles de Pedido
+INSERT INTO DetallesPedido (pedido_id, producto_id, cantidad, precio_unitario) 
+VALUES 
+(1, 1, 2, 15.99),
+(2, 2, 1, 9.99),
+(3, 3, 3, 12.50);
+
+-- Insertar datos en la tabla de Envíos
+INSERT INTO Envios (pedido_id, direccion, ciudad, codigo_postal, estado) 
+VALUES 
+(1, 'Calle Principal 123', 'Ciudad A', '12345', 'enviado'),
+(2, 'Avenida Central 456', 'Ciudad B', '54321', 'en camino');
+
+-- Insertar datos en la tabla de Carrito de Compras
+INSERT INTO CarritoCompras (usuario_id, producto_id, cantidad) 
+VALUES 
+(1, 3, 1),
+(2, 4, 2),
+(3, 5, 1);
+
+-- Insertar datos en la tabla de Métodos de Pago
+INSERT INTO MetodosPago (nombre, descripcion) 
+VALUES 
+('Tarjeta de crédito', 'Pago con tarjeta de crédito Visa o Mastercard'),
+('Transferencia bancaria', 'Transferencia bancaria a nuestra cuenta');
+
+-- Insertar datos en la tabla de Detalles de Pago
+INSERT INTO DetallesPago (pedido_id, metodo_pago_id, monto, fecha_pago) 
+VALUES 
+(1, 1, 31.98, '2024-02-24'),
+(2, 2, 19.98, '2024-02-25'),
+(3, 1, 12.50, '2024-02-26');
+
+//////////////////////////////////////////////////////////////////////////
+
+SELECT Pedidos.pedido_id, Pedidos.fecha, Pedidos.estado, DetallesPedido.producto_id, Productos.nombre AS nombre_producto, DetallesPedido.cantidad, DetallesPedido.precio_unitario
+FROM Pedidos
+JOIN DetallesPedido ON Pedidos.pedido_id = DetallesPedido.pedido_id
+JOIN Productos ON DetallesPedido.producto_id = Productos.producto_id
+WHERE Pedidos.pedido_id = 1;
+
+
+SELECT CarritoCompras.carrito_id, CarritoCompras.usuario_id, Productos.producto_id, Productos.nombre AS nombre_producto, CarritoCompras.cantidad
+FROM CarritoCompras
+JOIN Productos ON CarritoCompras.producto_id = Productos.producto_id
+WHERE CarritoCompras.usuario_id = 2;
+
+SELECT Pedidos.pedido_id, Pedidos.fecha, Pedidos.estado, Envios.direccion, Envios.ciudad, Envios.codigo_postal, Envios.estado AS estado_envio
+FROM Pedidos
+LEFT JOIN Envios ON Pedidos.pedido_id = Envios.pedido_id
+WHERE Pedidos.usuario_id = 3;
+
+SELECT MetodosPago.nombre, SUM(DetallesPago.monto) AS total_gastado
+FROM DetallesPago
+JOIN MetodosPago ON DetallesPago.metodo_pago_id = MetodosPago.metodo_pago_id
+JOIN Pedidos ON DetallesPago.pedido_id = Pedidos.pedido_id
+WHERE Pedidos.usuario_id = 1
+GROUP BY MetodosPago.nombre;
